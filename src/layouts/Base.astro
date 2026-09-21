@@ -6,7 +6,7 @@ import { profile } from '../data/profile';
 
 interface Props { title?: string; description?: string; home?: boolean }
 const { title, description = profile.tagline, home = true } = Astro.props;
-const fullTitle = title ? `${title} — ${profile.name}` : `${profile.name} — ${profile.role}, payments & wallet systems`;
+const fullTitle = title ? `${title} — ${profile.name}` : `${profile.name} — Backend engineer (Go, distributed systems)`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 <!doctype html>

@@ -4,9 +4,9 @@ export const profile = {
   company: 'iOL World',
   location: 'India',
   tagline:
-    'I build the backend systems that move money — virtual card issuing, multi-currency wallets, and event-driven pipelines in Go.',
+    'Backend engineer building reliable, high-throughput distributed systems in Go — currently the payments and wallet platform at iOL World.',
   summary:
-    'Backend-focused engineer with 2 years building payment, wallet and financial-transaction systems in Golang and Node.js. I care about transactional consistency, idempotency and production observability — the unglamorous parts that make money movement safe at scale.',
+    'The domain so far has been fintech; the problems — consistency under concurrency, idempotent APIs, event-driven pipelines, observability — apply to any system that has to be correct at scale.',
   email: 'manasgoyal95@gmail.com',
   resumeUrl: '/Manas_Goyal_Resume.pdf',
   links: {
