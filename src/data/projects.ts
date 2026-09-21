@@ -20,14 +20,14 @@ export const projects: Project[] = [
   {
     slug: 'virtual-credit-cards',
     title: 'Multi-currency virtual credit card platform',
-    subtitle: 'Cross-border B2B travel payments across 31 currencies and multiple issuing providers.',
+    subtitle: 'Cross-border B2B travel payments across 31 currencies and seven card-issuing providers.',
     org: 'iOL World',
     period: '2024 — present',
     featured: true,
     tags: ['Go', 'PostgreSQL', 'Provider integrations', 'Factory pattern'],
     summary:
-      'Designed the VCC issuing system that lets businesses create, fund, modify and cancel virtual cards, routing each card to the right issuing provider (Citi, Wex, CXP) by rule.',
-    flow: ['Client API', 'Validation & auth', 'Routing rules', 'Provider connector', 'Issuer (Citi · Wex · CXP)', 'Ledger & audit'],
+      'Designed the VCC issuing system that lets businesses create, fund, modify and cancel virtual cards, routing each card to the right issuing provider — Citi, CXP, Wex, Checkout.com, Revolut, TripLink or Mastercard ICCP — by rule.',
+    flow: ['Client API', 'Validation & auth', 'Routing rules', 'Provider connector', 'Issuer (Citi · CXP · Wex · CKO · Revolut · TripLink · ICCP)', 'Ledger & audit'],
     context:
       'Travel businesses pay suppliers in dozens of currencies and need a fresh card per booking: single-use, capped at the booking amount, valid for a window. Each card network / issuing bank exposes a different API, different currency coverage and different failure modes — and the product needed to add providers without rewriting the core.',
     built: [
@@ -51,7 +51,7 @@ export const projects: Project[] = [
       },
     ],
     impact: [
-      'Live across 31 currencies with three integrated issuing providers.',
+      'Live across 31 currencies with seven integrated issuing providers, including failover between providers when one is unavailable.',
       'Part of a platform serving ~1M requests/day.',
       'New providers onboard as a self-contained connector without changes to the core flow.',
     ],
@@ -104,7 +104,7 @@ export const projects: Project[] = [
     featured: true,
     tags: ['Go', 'Azure Service Bus', 'Queues', 'Idempotency'],
     summary:
-      'Built the pipeline that ingests authorization, settlement and refund events from card providers and reconciles them against internal ledgers — reliably, in order, exactly once.',
+      'Built the pipeline that ingests authorization, settlement and refund events from seven card providers and reconciles them against internal ledgers — reliably, in order, exactly once.',
     flow: ['Provider webhook', 'Ingest & persist', 'Service Bus queue', 'Consumer workers', 'Idempotent handler', 'Ledger reconciliation'],
     context:
       'Card issuers push events (authorizations, clearings, declines, refunds) over HTTP. They retry aggressively, deliver out of order, and occasionally send the same event twice. Processing had to be decoupled from ingestion so a spike or a downstream failure never lost an event.',

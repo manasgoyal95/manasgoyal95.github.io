@@ -19,7 +19,7 @@ export const experience: Experience[] = [
       'Core contributor on the payments platform behind a B2B travel-payments product: VCC issuing, wallets, webhook processing, reporting and notifications.',
     bullets: [
       'Engineered secure, scalable Go microservices (REST APIs, JSON contracts) for a B2B payments platform serving ~1M requests/day, with resilient inter-service communication via retries, circuit breakers and configurable timeouts.',
-      'Designed and implemented a multi-currency virtual credit card (VCC) system enabling cross-border B2B travel payments across 31 currencies, integrating Citi, Wex and CXP through a pluggable connector/factory architecture with rule-based provider routing.',
+      'Designed and implemented a multi-currency virtual credit card (VCC) system enabling cross-border B2B travel payments across 31 currencies, integrating seven issuing providers (Citi, CXP, Wex, Checkout.com, Revolut, TripLink, Mastercard ICCP) through a pluggable connector/factory architecture with rule-based provider routing.',
       'Built a multi-currency digital wallet backed by a double-entry ledger guaranteeing transactional consistency across top-ups, transfers, funding and refunds, with multiple payment methods and FX-based conversion.',
       'Built an event-driven webhook pipeline on Azure Service Bus with queue consumers, retry handling, idempotency checks, audit reporting and dead-letter recovery — 99% delivery reliability.',
       'Developed a standalone Go reporting service producing PDF/XLSX/CSV financial reports with cron-scheduled, timezone-aware email delivery and paginated batch processing over PostgreSQL.',

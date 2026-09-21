@@ -20,6 +20,6 @@ export const profile = {
     { value: '~1M', label: 'requests / day served' },
     { value: '31', label: 'currencies supported' },
     { value: '99%', label: 'webhook delivery reliability' },
-    { value: '3', label: 'card-issuing providers integrated' },
+    { value: '7', label: 'card-issuing providers integrated' },
   ],
 } as const;
