@@ -3,7 +3,7 @@ import Section from './Section.astro';
 import Icon from './Icon.astro';
 import { projects } from '../data/projects';
 const featured = projects.filter((p) => p.featured);
-const rest = projects.filter((p) => !p.featured);
+const rest = projects.filter((p) => !p.featured && p.org !== 'Personal');
 ---
 <Section id="work" eyebrow="Selected work" title="Systems I've designed and shipped">
   <div class="grid gap-4 md:grid-cols-3">
