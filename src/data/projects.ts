@@ -4,12 +4,16 @@ export type Project = {
   subtitle: string;
   org: string;
   period: string;
+  /** Honest one-liner on ownership, shown under the title. */
+  role: string;
   featured?: boolean;
   tags: string[];
   summary: string;
   /** Simple left-to-right flow rendered as chips with arrows. */
   flow: string[];
   context: string;
+  /** Key facts rendered as a spec table. */
+  specs: { label: string; value: string }[];
   built: string[];
   decisions: { title: string; body: string }[];
   impact: string[];
@@ -18,181 +22,250 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: 'virtual-credit-cards',
-    title: 'Multi-currency virtual credit card platform',
-    subtitle: 'Cross-border B2B travel payments across 31 currencies and seven card-issuing providers.',
+    slug: 'webhook-pipeline',
+    title: 'Provider webhook & settlement reconciliation pipeline',
+    subtitle: 'Every authorization, clearing, refund and settlement from seven card providers — ingested once, processed reliably, reconciled to the ledger.',
     org: 'iOL World',
-    period: '2024 — present',
+    period: 'Oct 2024 — present',
+    role: 'Designed and built the queue pipeline (publisher, consumer, DLQ recovery) and the settle-vs-auth reconciliation; sole author of the DLQ consumer.',
     featured: true,
-    tags: ['Go', 'PostgreSQL', 'Provider integrations', 'Factory pattern'],
+    tags: ['Go', 'Azure Service Bus', 'GCP Pub/Sub', 'PostgreSQL', 'Idempotency'],
     summary:
-      'Designed the VCC issuing system that lets businesses create, fund, modify and cancel virtual cards, routing each card to the right issuing provider — Citi, CXP, Wex, Checkout.com, Revolut, TripLink or Mastercard ICCP — by rule.',
-    flow: ['Client API', 'Validation & auth', 'Routing rules', 'Provider connector', 'Issuer (Citi · CXP · Wex · CKO · Revolut · TripLink · ICCP)', 'Ledger & audit'],
+      'Two-stage pipeline that accepts provider pushes fast, queues them, and processes them with retries, dead-lettering and per-provider recovery — then reconciles what providers say happened against what the ledger believes.',
+    flow: ['Provider push', 'Accept + dedup insert', 'Queue (Service Bus / Pub/Sub)', 'Peek-lock consumer', 'Provider processor', 'Ledger + audit row', 'DLQ → recovery'],
     context:
-      'Travel businesses pay suppliers in dozens of currencies and need a fresh card per booking: single-use, capped at the booking amount, valid for a window. Each card network / issuing bank exposes a different API, different currency coverage and different failure modes — and the product needed to add providers without rewriting the core.',
+      'Seven issuers (Citi, CXP, Wex, Checkout.com, Revolut, TripLink, Mastercard ICCP) push events over HTTP with different shapes, retry semantics and ordering guarantees. Some also deliver settlement files over SFTP that must agree with the webhooks. Losing or double-applying an event means a wrong balance on a real card.',
+    specs: [
+      { label: 'Ingress', value: 'One signed endpoint per provider (HMAC / Bearer / signature-verified); raw payload persisted before ack' },
+      { label: 'Dedup', value: 'Natural keys (provider event id, subject + notification id) with ON CONFLICT DO NOTHING; one audit table per provider' },
+      { label: 'Transport', value: 'Azure Service Bus (peek-lock) and GCP Pub/Sub behind one transport-neutral decision path: parse → source-check → route → ack / retry' },
+      { label: 'Failure handling', value: 'Abandon-with-backoff until max delivery count, then dead-letter; final-attempt alerting; rate-limit backoff' },
+      { label: 'Recovery', value: 'DLQ consumer with per-provider recovery handlers (CXP, Wex, CKO, Revolut) and an async replay endpoint for stranded webhooks' },
+      { label: 'Reconciliation', value: 'Settle-vs-auth amount deltas across providers, CXP/Wex/CKO/TripLink settlement-file reconcile, mismatches recorded for review' },
+      { label: 'Scale-out', value: 'CXP and Wex consumers ship as standalone binaries from the same image so they scale independently of the API' },
+      { label: 'Tests', value: '111 test files in the webhook package (scenario tests per provider event type)' },
+    ],
     built: [
-      'A pluggable connector architecture: every provider implements one Go interface (issue, fund, modify, cancel, fetch) and a factory selects the implementation at runtime.',
-      'Rule-based provider routing driven by currency, amount, client configuration and provider health, so operations can change routing without a deploy.',
-      'Full card lifecycle — issue, fund, modify limits/dates, cancel, reissue — with each transition persisted and auditable.',
-      'REST APIs with strict JSON contracts consumed by the booking platform and internal portals.',
+      'The Service Bus publisher, peek-lock consumer and DLQ consumer, later made transport-neutral so the same decision pipeline runs on GCP Pub/Sub.',
+      'Per-provider processors for Citi, ICCP and TripLink push notifications (new design), plus CKO settlement processing and card-number masking in logs.',
+      'Settle-vs-auth reconciliation: detects amount deltas between authorization and clearing across every provider and posts the correcting ledger entry.',
+      'CXP settlement-file reconcile, refund/auth-reversal netting, and the CKO settlement-file flow over SFTP.',
+      'Revolut webhook replay: hourly cron re-drives events stranded at status 0, with an on-demand endpoint for failed ones.',
+      'Event-master mapping with an in-memory cache that normalises provider-specific event names into one internal catalogue.',
     ],
     decisions: [
       {
-        title: 'Interface + factory over per-provider branches',
-        body: 'Provider-specific logic is confined to its connector; the orchestration layer never knows which issuer it is talking to. Adding a provider is a new package plus a routing rule.',
+        title: 'Persist, then ack, then process',
+        body: 'The raw event is written and acknowledged before any business logic runs. Providers see fast 2xx responses, and every event can be replayed from our own table if the queue or a consumer misbehaves.',
       },
       {
-        title: 'Resilience at the call boundary',
-        body: 'Issuer calls are wrapped with configurable timeouts, retries with backoff and circuit breakers so a slow provider degrades gracefully instead of taking the API down.',
+        title: 'Retry is the queue\'s job; recovery is a feature',
+        body: 'Consumers never loop on failure — they abandon and let delivery count climb. Dead-lettered events are expected, and a recovery consumer turns a poison-message incident into a five-minute replay.',
       },
       {
-        title: 'Every money-affecting action is idempotent',
-        body: 'Client-supplied idempotency keys and unique constraints ensure a retried "issue card" never produces two cards or two fundings.',
+        title: 'One decision path, two transports',
+        body: 'Parsing, routing and the ack/retry decision were pulled out of the Service Bus receiver so the Pub/Sub consumer shares them verbatim. The migration from Azure to GCP became a transport change, not a rewrite.',
+      },
+      {
+        title: 'Reconcile amounts, not just events',
+        body: 'A clearing that arrives for a different amount than the authorization is normal (FX, tips, partial captures). The pipeline computes the delta and posts it, instead of trusting either side.',
       },
     ],
     impact: [
-      'Live across 31 currencies with seven integrated issuing providers, including failover between providers when one is unavailable.',
-      'Part of a platform serving ~1M requests/day.',
-      'New providers onboard as a self-contained connector without changes to the core flow.',
+      '99% delivery reliability for provider events; ingestion is decoupled from API latency.',
+      'Seven providers on one pipeline; onboarding a new one is a processor plus a recovery handler.',
+      'Every event has an audit row keyed by provider id, so support questions are one search away.',
     ],
   },
   {
     slug: 'wallet-ledger',
     title: 'Multi-currency wallet on a double-entry ledger',
-    subtitle: 'Top-ups, transfers, card funding and refunds with guaranteed transactional consistency.',
+    subtitle: 'Client and issuing-side wallets across 31 currencies: top-ups, transfers, card funding, refunds and statements — every movement a balanced posting.',
     org: 'iOL World',
-    period: '2024 — present',
+    period: 'Oct 2024 — present',
+    role: 'One of two principal contributors to the wallets domain (124 commits); built the FX-rate resolver and wallet statements.',
     featured: true,
-    tags: ['Go', 'PostgreSQL', 'Double-entry ledger', 'FX'],
+    tags: ['Go', 'PostgreSQL', 'Double-entry ledger', 'FX', 'sqlx'],
     summary:
-      'Built the wallet platform that holds client balances in multiple currencies and funds virtual cards, with every movement recorded as balanced debit/credit postings.',
-    flow: ['Top-up / transfer request', 'Idempotency check', 'DB transaction', 'Debit + credit postings', 'Balance update', 'Statement'],
+      'The balance side of the platform: multi-currency client wallets plus provider-side issuing wallets, with a ledger that records previous and updated balance on every debit/credit.',
+    flow: ['Top-up / transfer / fund', 'Validate + idempotency', 'DB transaction', 'Debit + credit postings', 'Balance row (locked)', 'Statement / report'],
     context:
-      'A payments platform cannot afford a balance that disagrees with its history. Wallets needed to support several funding methods, FX conversion between currencies, and refunds that reverse cleanly — all under concurrent requests from the card-issuing flow.',
+      'Wallets fund virtual cards. A balance that disagrees with its history, or a refund that double-credits, is a financial incident. The system had to handle concurrent funding from the card flow, cross-currency movements, refunds, manual adjustments by operations, and produce statements finance can reconcile.',
+    specs: [
+      { label: 'Wallet families', value: 'Client wallets (org × currency) and issuing wallets (org × currency × provider) with an in-transit balance for transfers' },
+      { label: 'Ledger', value: 'wallet_ledger / issuing_wallet_ledger: change type (c/d), previous and updated balance, references — written inside the same transaction as the movement' },
+      { label: 'Operations', value: 'Create, top-up (multiple methods incl. bank transfer with proforma invoice), transfer, credit-check, fund/modify/cancel/refund transaction, manual adjustment, orders' },
+      { label: 'FX', value: 'Internal fxrate resolver: live Treasury rates with a 30-minute cache and a database fallback; markup rules per client' },
+      { label: 'Concurrency', value: 'Row-level locks on the balance row; *Tx helper variants so multi-table writes compose in one transaction' },
+      { label: 'Outputs', value: 'Wallet statements (PDF/XLSX), daily org balance email (issuing wallets folded in), funding-requirement views' },
+    ],
     built: [
-      'A double-entry ledger where each operation writes a balanced pair of postings inside one database transaction; balances are derived, never blindly overwritten.',
-      'Wallet operations: top-up (multiple payment methods), wallet-to-wallet transfer, card funding, refunds and manual adjustments.',
-      'FX-based conversion with markup handling for cross-currency movements.',
-      'Statement generation from the ledger, so what the customer sees is exactly what was posted.',
+      'Wallet creation, top-up, wallet-to-wallet transfer, manual adjustment, and the transaction detail/list APIs.',
+      'Refund-to-wallet and the refund/cancel lifecycle for funded transactions, including fund-reversed events after card cancellation.',
+      'The fxrate package: a single provider every conversion resolves through, backed by Treasury with cached rates and a database fallback.',
+      'Wallet statements and the daily wallet-balance report with issuing-wallet totals.',
+      'Order status split into action + payment status, plus the bank-details endpoint for the top-up screen.',
     ],
     decisions: [
       {
-        title: 'Row-level locks on balances',
-        body: 'Concurrent fundings against the same wallet serialize on the balance row (SELECT … FOR UPDATE), which eliminated lost-update races without an external lock service.',
+        title: 'Balances are derived, never overwritten blindly',
+        body: 'Every movement writes the ledger row with previous and updated balance under a row lock. Reconciliation is a query, not an investigation.',
       },
       {
         title: 'Reversal, not deletion',
-        body: 'A refund is a new pair of postings that mirrors the original. Nothing is ever mutated or removed, which keeps audit and reconciliation trivial.',
+        body: 'A refund is a new posting that mirrors the original. Nothing is mutated or removed, which keeps audit and statements trivially correct.',
       },
       {
-        title: 'Keep the ledger boring',
-        body: 'Business rules live in the service layer; the ledger only knows accounts, postings and invariants. That made it reusable across the legacy and the new issuing-side wallets.',
+        title: 'One FX entry point',
+        body: 'Conversion used to be scattered. Funnelling every rate lookup through one provider with cache and fallback made rates consistent across cards, wallets and reports.',
       },
     ],
     impact: [
-      'Balances provably reconcile to posting history.',
-      'Supports multi-currency operations with FX conversion for cross-border payments.',
-      'The same ledger core powers wallet statements and financial reporting.',
+      'Balances provably reconcile to posting history across 31 currencies.',
+      'The same ledger feeds statements, the reporting service and finance reports.',
+      'Funding path survives provider and Treasury outages via fallbacks instead of failing top-ups.',
     ],
   },
   {
-    slug: 'webhook-pipeline',
-    title: 'Event-driven webhook processing pipeline',
-    subtitle: 'Provider notifications on Azure Service Bus with retries, idempotency and DLQ recovery.',
+    slug: 'virtual-credit-cards',
+    title: 'Virtual card platform & issuer integrations',
+    subtitle: 'Issue, fund, modify, reissue and cancel virtual cards across seven issuing providers.',
     org: 'iOL World',
-    period: '2024 — present',
+    period: 'Oct 2024 — present',
+    role: 'Core contributor from the first commit. Built the Revolut integration end to end and most of Checkout.com; owned lifecycle APIs, card verification and client-facing webhooks. Connector/routing core was a team effort.',
     featured: true,
-    tags: ['Go', 'Azure Service Bus', 'Queues', 'Idempotency'],
+    tags: ['Go', 'Provider integrations', 'OAuth1 / OAuth2 / mTLS', 'Webhooks'],
     summary:
-      'Built the pipeline that ingests authorization, settlement and refund events from seven card providers and reconciles them against internal ledgers — reliably, in order, exactly once.',
-    flow: ['Provider webhook', 'Ingest & persist', 'Service Bus queue', 'Consumer workers', 'Idempotent handler', 'Ledger reconciliation'],
+      'A B2B travel-payments card engine: per-booking single-use cards routed to the best issuer by currency, amount and client rules, with the full lifecycle audited and pushed to clients as webhooks.',
+    flow: ['Client API', 'Validate + auth', 'Provider routing', 'Connector (7 issuers)', 'Card issued + funded', 'Lifecycle events', 'Client webhook'],
     context:
-      'Card issuers push events (authorizations, clearings, declines, refunds) over HTTP. They retry aggressively, deliver out of order, and occasionally send the same event twice. Processing had to be decoupled from ingestion so a spike or a downstream failure never lost an event.',
+      'Travel businesses need a fresh card per booking, in the supplier\'s currency, capped at the booking amount. Each issuer has its own API, auth scheme (OAuth1, OAuth2, mTLS, signed webhooks), currency coverage and quirks. Cards must be modifiable, reissuable and cancellable, and clients must be told what happened.',
+    specs: [
+      { label: 'Providers', value: 'Citi VCA, CXP/Conferma, Wex/EnCompass, Checkout.com, Revolut, TripLink, Mastercard ICCP — one connector package each behind a shared interface + factory' },
+      { label: 'Lifecycle', value: 'Issue → fund → modify (amount, dates) → reissue → cancel/terminate → refund; each transition persisted in vcc_events with a rollup materialised view' },
+      { label: 'Routing', value: 'Rule-based by currency, brand, country and beneficiary category; USD and cross-provider fallback; failover when an issuer is down' },
+      { label: 'Resilience', value: 'Outbound gateway with timeouts, retries with backoff and circuit breakers; transient 5xx retry on Revolut card calls' },
+      { label: 'Client webhooks', value: 'Subscription model per org; created / activated / funded / terminated events with a versioned payload' },
+      { label: 'Codebase', value: '~280k lines of Go, 966 files, 487 test files; PR gate: gofmt, vet, golangci-lint, tidy, tests with coverage' },
+    ],
     built: [
-      'A thin ingest endpoint that validates, persists the raw event and enqueues it — acknowledging the provider fast.',
-      'Queue consumers on Azure Service Bus with bounded concurrency, structured retries and dead-letter handling.',
-      'Idempotency keyed on provider event IDs, plus out-of-order-safe handlers that reconcile against the current internal state.',
-      'Audit reporting on every processed event and a DLQ recovery path for replaying poison messages after a fix.',
+      'Revolut Business issuing integration: client SDK, webhook signature verification, card activation windows, MCC allow-list auto-expansion on category declines, reconciliation and replay.',
+      'Checkout.com: card masking, auth-reversal and settled-reversal events, termination-date modification, settlement-file processing over SFTP.',
+      'VCC lifecycle APIs — cancel, modify, reissue, details/list with pagination — plus Expired and Funded-Failed statuses, display status, and card verification on the auth webhook.',
+      'Outbound webhook subscriptions to clients, and the payload restructure (eventDetails + top-level UDFs) used by external integrators.',
+      'Platform hygiene: the resilient HTTP client, make check / make fix quality gates, the PR validation pipeline, and alerting for every money-relevant cron via a single LogAlertableFailure path.',
     ],
     decisions: [
       {
-        title: 'Persist before enqueue',
-        body: 'The raw payload is stored before anything else. If the queue or the consumer misbehaves, the event can always be replayed from the source of truth.',
+        title: 'Every money-affecting call is idempotent',
+        body: 'Client-supplied keys and unique constraints ensure a retried "issue card" or "fund" never produces two of anything — providers retry, clients retry, we retry.',
       },
       {
-        title: 'Treat the DLQ as a feature',
-        body: 'Poison messages are expected. A recovery job re-drives dead-lettered events on demand, turning incidents into a five-minute operation instead of manual data surgery.',
+        title: 'Provider quirks stay in the connector',
+        body: 'Revolut declines hotel merchants until their MCC is allow-listed; CXP cannot unsuspend a card; Citi needs mTLS + OAuth1. All of that lives in the provider package; the orchestration layer never branches on issuer.',
       },
       {
-        title: 'Observability first',
-        body: 'Every hop emits structured logs and New Relic traces keyed by event ID, so a support question ("did we get the settlement for card X?") is a single search.',
+        title: 'Alert on the failure, not the symptom',
+        body: 'Critical crons were failing quietly. Routing every money-relevant job through one alertable-failure path turned silent breakage into a Teams message with context.',
       },
     ],
     impact: [
-      '99% delivery reliability for provider events.',
-      'Ingestion decoupled from processing — provider spikes no longer affect API latency.',
-      'Audit trail on every event for finance and support.',
+      'Seven live issuing providers across 31 currencies on a platform serving ~1M requests/day.',
+      'Revolut went from zero to production issuer, including its own reconciliation and replay tooling.',
+      'PR quality gates and coverage reporting are now blocking on every merge.',
     ],
-  },
-  {
-    slug: 'notification-service',
-    title: 'Org-wide email notification microservice',
-    subtitle: 'A shared service every team adopted, built solo from design to production.',
-    org: 'iOL World',
-    period: '2025',
-    tags: ['Go', 'Gin', 'PostgreSQL', 'SendGrid', 'Azure Blob'],
-    summary:
-      'Designed and built the company’s notification service: templated, multi-language emails with attachments, delivered through SendGrid or SMTP with automatic retries.',
-    flow: ['Producer service', 'REST API', 'Template render', 'PDF generate & encrypt', 'SendGrid / SMTP', 'Delivery log'],
-    context:
-      'Several services were each sending email their own way, with inconsistent templates and no retry or audit story. The goal was a single, versioned API any team could call.',
-    built: [
-      'Gin-based REST API with versioning, backed by PostgreSQL for templates, requests and delivery state.',
-      'Dynamic template rendering with per-language variants and automatic fallback to a default locale.',
-      'Encrypted PDF generation stored on Azure Blob Storage and attached to outgoing mail.',
-      'Pluggable delivery via SendGrid or SMTP with automatic retries and delivery tracking.',
-    ],
-    decisions: [
-      {
-        title: 'Templates as data, not code',
-        body: 'Teams manage their own templates and locales through the API; the service never needs a deploy to change copy.',
-      },
-      {
-        title: 'Deliverability is a queue problem',
-        body: 'Sends are persisted first and retried with backoff; a provider outage delays mail but never drops it.',
-      },
-    ],
-    impact: ['Adopted by every engineering team in the organisation.', 'One audit trail for all outbound email.'],
   },
   {
     slug: 'reporting-service',
     title: 'Financial reporting service',
-    subtitle: 'Scheduled PDF / XLSX / CSV reports over large PostgreSQL datasets.',
+    subtitle: 'Self-serve, scheduled and exported reports over wallet and card data — nine report types, three formats, timezone-aware delivery.',
     org: 'iOL World',
-    period: '2025',
-    tags: ['Go', 'PostgreSQL', 'Cron', 'PDF / XLSX'],
+    period: 'Jun 2025 — present',
+    role: 'Top contributor (122 commits); built most of the service and repository layers, ES logging, exports and scheduled delivery.',
+    tags: ['Go', 'PostgreSQL', 'sqlx', 'excelize', 'Azure Blob', 'cron'],
     summary:
-      'A standalone Go service that generates VCC summaries, order reports and wallet statements, delivered on schedule in the user’s timezone.',
-    flow: ['Report definition', 'Scheduler (cron, tz-aware)', 'Paginated query', 'Render PDF / XLSX / CSV', 'Email delivery', 'Run history'],
+      'A standalone Go service where users define reports (columns, filters, UDFs, output options), preview them, export to CSV/XLSX/PDF, and schedule email delivery — all read-only against the wallet database.',
+    flow: ['Report definition', 'Access control (wallet type / admin)', 'Dynamic SQL builder', 'Read replica query', 'CSV / XLSX / PDF', 'Blob + CDN', 'Scheduled email'],
     context:
-      'Finance and operations users needed recurring exports over months of transaction data. Naïve "select everything" exports timed out and exhausted memory, and schedules had to respect each organisation’s local time.',
+      'Finance and operations users needed recurring exports over months of card and wallet activity, scoped to what their organisation is allowed to see. Naïve exports timed out, deep OFFSET paging was O(n²) on the database, and schedules had to fire in each organisation\'s local time.',
+    specs: [
+      { label: 'Report types', value: 'VCC summary, cards, events; orders; iOLX and issuing wallet statements; combined statement; accounting (admin-only) — 9 in total' },
+      { label: 'Access control', value: 'Per-org wallet type gates which report types are visible; admin-only provider columns are not projected in SQL and free-text fields are provider-masked at read time' },
+      { label: 'Querying', value: 'Dynamic WHERE builder with typed operators (equals, in, between, contains…), rolling date ranges, UDF filters and template-scoped UDF columns' },
+      { label: 'Exports', value: 'CSV, XLSX (excelize) and PDF; single bounded query (1M-row cap) with retry on hot-standby recovery conflicts; uploaded to Azure Blob behind a CDN' },
+      { label: 'Scheduling', value: 'robfig/cron with daily / weekly / monthly schedules resolved in the report\'s IANA timezone; separate worker binary for the scheduler tier' },
+      { label: 'Observability', value: 'Batched Elasticsearch logging with typed events and field sanitisation; identity-service auth middleware' },
+    ],
     built: [
-      'Report definitions with filters, columns and output options, stored in the service’s own database and queried read-only against wallet data.',
-      'A timezone-aware scheduler and a separate worker binary so heavy exports run off the API path.',
-      'Paginated batch processing with cursors so multi-hundred-thousand-row exports stream to disk in bounded memory.',
-      'Renderers for PDF, XLSX and CSV plus emailed delivery and per-run history.',
+      'The service and repository layers for reports, deliveries, exports, output options and UDFs, including the dynamic filter-to-SQL translation.',
+      'Wallet-type and admin access control, provider masking, and the "iOLX admin sees all child orgs" model.',
+      'Export pipeline to CSV/XLSX/PDF with number/date formatting, empty-report generation, masked card numbers and Azure Blob upload.',
+      'Timezone-aware scheduled delivery with email notifications, plus recipients on manual exports.',
+      'Elasticsearch structured logging (v1 and v2) and the identity-service middleware.',
     ],
     decisions: [
       {
-        title: 'Separate server and worker binaries',
-        body: 'Same codebase, two entrypoints. The API stays responsive while workers scale independently for month-end load.',
+        title: 'One bounded query beats deep pagination',
+        body: 'Progressively deeper OFFSET pages were quadratic on the read replica and triggered standby recovery-conflict cancellations. A single capped query with retry fixed both, and never truncates silently.',
       },
       {
-        title: 'Cursor pagination over OFFSET',
-        body: 'Keyset pagination keeps each page cheap regardless of how deep into the dataset an export is.',
+        title: 'Access control in the SQL projection',
+        body: 'Admin-only columns are excluded at query-build time rather than filtered after the fact, so a non-admin export cannot leak a provider name even by accident.',
+      },
+      {
+        title: 'Separate server and worker binaries',
+        body: 'Same codebase, two entrypoints: the API stays responsive while the scheduler tier scales for month-end load.',
       },
     ],
-    impact: ['Large exports run in bounded memory.', 'Reports arrive on schedule in each organisation’s timezone.'],
+    impact: [
+      'Nine report types self-served by clients instead of ad-hoc SQL requests to engineering.',
+      'Large exports run in bounded memory with no replica conflicts.',
+      'Reports land in each organisation\'s inbox on schedule, in their timezone.',
+    ],
+  },
+  {
+    slug: 'notification-service',
+    title: 'Org-wide email notification service',
+    subtitle: 'The shared email service every team calls: templated, localised, with encrypted PDF attachments and full history.',
+    org: 'iOL World',
+    period: '2025',
+    role: 'Designed and built solo, from schema to production.',
+    tags: ['Go', 'Gin', 'GORM', 'PostgreSQL', 'SendGrid / SMTP', 'Azure Blob', 'chromedp'],
+    summary:
+      'A Gin + GORM microservice that renders per-client, per-language templates from Blob Storage, sends via SendGrid or a caller-supplied SMTP relay with retries, optionally renders the email to an encrypted PDF, and keeps a searchable delivery history.',
+    flow: ['Caller (JWT)', 'Validate + persist', 'Template fetch (client / lang)', 'Render', 'SendGrid or SMTP (retries)', 'PDF → encrypt → Blob', 'History + SAS URL'],
+    context:
+      'Several services were each sending email their own way, with inconsistent templates, no localisation and no retry or audit story. The goal was one versioned API that any team could adopt without deploying anything of their own.',
+    specs: [
+      { label: 'API', value: 'v1 (snake_case, legacy) and v2 (camelCase, searchKey, date filters) side by side; JWT-authenticated; health + ping endpoints' },
+      { label: 'Templates', value: 'Fetched from Azure Blob by client / language / template name; language codes normalised with fallback to English; Go templates with dynamic helper functions' },
+      { label: 'Delivery', value: 'SendGrid by default or per-request SMTP (implicit TLS on 465 or STARTTLS); bounded retries; async send with persisted status' },
+      { label: 'PDF', value: 'HTML rendered with headless Chrome (chromedp), encrypted with a random 16-character password via pdfcpu, stored in Blob; password kept with the record' },
+      { label: 'Access', value: 'Time-limited SAS download URLs, cached until expiry, refreshable on demand' },
+      { label: 'History', value: 'Paginated email history by reference / searchKey / sender / date range; per-notification detail' },
+      { label: 'Ops', value: 'New Relic APM middleware, GORM auto-migration, Docker image' },
+    ],
+    built: [
+      'The whole service: data model, migrations, auth, controllers, template engine, delivery, PDF pipeline and history APIs.',
+      'A v2 API introduced without breaking v1 callers, documented with a versioning guide for consuming teams.',
+      'Language fallback so a missing locale never blocks an email.',
+      'Encrypted PDF attachments with SAS-based retrieval for compliance-sensitive documents.',
+    ],
+    decisions: [
+      {
+        title: 'Templates as data, not code',
+        body: 'Teams manage their own templates and locales in Blob Storage; the service never needs a deploy to change copy or add a language.',
+      },
+      {
+        title: 'Two API versions, one code path',
+        body: 'v2 requests are normalised to the internal model, so legacy snake_case callers kept working while new teams got a cleaner contract.',
+      },
+      {
+        title: 'Render once, secure by default',
+        body: 'PDFs are encrypted before they touch storage and only ever served through short-lived SAS URLs.',
+      },
+    ],
+    impact: ['Adopted by every engineering team in the organisation.', 'One audit trail and one search for all outbound email.'],
   },
   {
     slug: 'pulse-realtime-chat',
@@ -200,29 +273,29 @@ export const projects: Project[] = [
     subtitle: 'Go + WebSockets + React, deployed as a single binary with live presence and typing indicators.',
     org: 'Personal',
     period: '2026',
+    role: 'Solo take-home turned side project.',
     tags: ['Go', 'WebSockets', 'React', 'TypeScript', 'SQLite'],
     summary:
-      'A take-home turned side project: link-is-access chat rooms with persistence, presence, typing indicators and reconnect-with-replay — shipped as one static Go binary.',
+      'Link-is-access chat rooms with persistence, presence, typing indicators and reconnect-with-replay — shipped as one static Go binary.',
     flow: ['Browser', 'WebSocket /ws', 'Room hub (Go)', 'SQLite (pure Go)', 'Broadcast', 'Other clients'],
     context:
       'The brief left most decisions open, so the decisions became the deliverable: what to persist, how identity works, how rooms are scoped, and how to keep deployment to a single artifact.',
+    specs: [
+      { label: 'Transport', value: 'Raw WebSockets (gorilla/websocket); per-room hub goroutine' },
+      { label: 'Persistence', value: 'SQLite via a pure-Go driver — no CGO, static binary, distroless container' },
+      { label: 'Frontend', value: 'React 18 + TypeScript + Tailwind, embedded with go:embed' },
+      { label: 'Realtime features', value: 'Presence, typing indicators (client-throttled, server-expired), reconnect with missed-message replay' },
+    ],
     built: [
-      'Go backend with gorilla/websocket, a per-room hub, and SQLite via a pure-Go driver (no CGO → static binary, distroless container).',
-      'React 18 + TypeScript + Tailwind frontend embedded into the binary with go:embed — one service, one URL, no CORS.',
-      'Live presence and typing indicators, throttled on the client and auto-expired on the server.',
-      'Reconnect handling with missed-message replay for the current room.',
+      'Go backend with a per-room hub and SQLite persistence.',
+      'React client embedded into the binary — one service, one URL, no CORS.',
+      'Live presence and typing indicators; reconnect handling with replay.',
     ],
     decisions: [
-      {
-        title: 'Per-URL rooms, link is access',
-        body: 'The Figma/Miro model: the slug is the conversation. No accounts, no create/join/list UI.',
-      },
-      {
-        title: 'Single binary deploy',
-        body: 'Serving the SPA and the WebSocket endpoint from one process removed an entire class of split-origin problems.',
-      },
+      { title: 'Per-URL rooms, link is access', body: 'The Figma/Miro model: the slug is the conversation. No accounts, no create/join/list UI.' },
+      { title: 'Single binary deploy', body: 'Serving the SPA and the WebSocket endpoint from one process removed an entire class of split-origin problems.' },
     ],
-    impact: ['Live demo and full write-up of every trade-off in the README.'],
+    impact: ['Live demo and a README that documents every trade-off.'],
     links: [
       { label: 'Source on GitHub', href: 'https://github.com/manasgoyal95/realtime-chat' },
       { label: 'Live demo', href: 'https://pulse-chat-7puv.onrender.com' },

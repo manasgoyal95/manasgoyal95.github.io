@@ -5,7 +5,7 @@ import { projects } from '../data/projects';
 const featured = projects.filter((p) => p.featured);
 const rest = projects.filter((p) => !p.featured && p.org !== 'Personal');
 ---
-<Section id="work" eyebrow="Selected work" title="Systems I've designed and shipped">
+<Section id="work" eyebrow="Selected work" title="Systems I've built and shipped">
   <div class="grid gap-4 md:grid-cols-3">
     {featured.map((p) => (
       <a href={`/work/${p.slug}`} class="group relative flex flex-col rounded-card border border-line bg-bg-elevated p-6 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_8px_30px_-12px_rgb(0_0_0/0.15)]">
