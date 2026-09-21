@@ -1,0 +1,89 @@
+---
+import Icon from './Icon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { profile } from '../data/profile';
+
+interface Props { home?: boolean }
+const { home = true } = Astro.props;
+const prefix = home ? '' : '/';
+const links = [
+  { href: `${prefix}#work`, label: 'Work' },
+  { href: `${prefix}#experience`, label: 'Experience' },
+  { href: `${prefix}#skills`, label: 'Skills' },
+  { href: `${prefix}#contact`, label: 'Contact' },
+];
+---
+<header class="sticky top-0 z-40 border-b border-line/0 bg-bg/80 backdrop-blur-md transition-[border-color] data-[scrolled]:border-line" id="site-header">
+  <nav class="container-prose flex h-16 items-center justify-between" aria-label="Primary">
+    <a href="/" class="font-mono text-sm font-medium tracking-tight text-fg">
+      manas<span class="text-accent">.</span>goyal
+    </a>
+
+    <ul class="hidden items-center gap-1 md:flex">
+      {links.map((l) => (
+        <li>
+          <a href={l.href} class="rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-bg-muted hover:text-fg">
+            {l.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="flex items-center gap-1">
+      <a
+        href={profile.resumeUrl}
+        download
+        class="hidden h-9 items-center gap-2 rounded-full border border-line-strong px-3.5 text-sm font-medium text-fg transition-colors hover:border-fg sm:inline-flex"
+      >
+        <Icon name="download" size={15} />
+        Résumé
+      </a>
+      <ThemeToggle />
+      <button
+        id="nav-open"
+        type="button"
+        class="inline-flex size-9 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg md:hidden"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <Icon name="menu" />
+      </button>
+    </div>
+  </nav>
+
+  <div id="mobile-menu" class="hidden border-t border-line md:hidden" hidden>
+    <ul class="container-prose flex flex-col py-2">
+      {links.map((l) => (
+        <li>
+          <a href={l.href} class="block py-3 text-base text-fg-muted hover:text-fg" data-nav-link>{l.label}</a>
+        </li>
+      ))}
+      <li>
+        <a href={profile.resumeUrl} download class="flex items-center gap-2 py-3 text-base text-fg-muted hover:text-fg">
+          <Icon name="download" size={16} /> Download résumé
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById('site-header')!;
+  const onScroll = () => {
+    if (window.scrollY > 8) header.setAttribute('data-scrolled', '');
+    else header.removeAttribute('data-scrolled');
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  const open = document.getElementById('nav-open')!;
+  const menu = document.getElementById('mobile-menu')!;
+  const setOpen = (v: boolean) => {
+    menu.hidden = !v;
+    menu.classList.toggle('hidden', !v);
+    open.setAttribute('aria-expanded', String(v));
+  };
+  open.addEventListener('click', () => setOpen(menu.hidden));
+  menu.querySelectorAll('[data-nav-link]').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+</script>

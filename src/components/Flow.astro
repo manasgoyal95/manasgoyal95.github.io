@@ -1,0 +1,19 @@
+---
+/** Renders a left-to-right system flow as labelled nodes joined by arrows. */
+interface Props { steps: readonly string[]; label?: string }
+const { steps, label = 'Data flow' } = Astro.props;
+---
+<figure class="rounded-card border border-line bg-bg-muted/60 p-4 sm:p-5" aria-label={label}>
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-3 sm:gap-x-3">
+    {steps.map((s, i) => (
+      <>
+        <li class="rounded-lg border border-line bg-bg-elevated px-3 py-2 font-mono text-xs text-fg shadow-[0_1px_0_rgb(0_0_0/0.03)]">{s}</li>
+        {i < steps.length - 1 && (
+          <li aria-hidden="true" class="text-fg-subtle">
+            <svg width="20" height="12" viewBox="0 0 20 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6h17M13 1l5 5-5 5"/></svg>
+          </li>
+        )}
+      </>
+    ))}
+  </ol>
+</figure>

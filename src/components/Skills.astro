@@ -1,0 +1,37 @@
+---
+import Section from './Section.astro';
+import { skills } from '../data/skills';
+import { education } from '../data/experience';
+import { profile } from '../data/profile';
+---
+<Section id="skills" eyebrow="Skills" title="What I work with" class="border-t border-line">
+  <div class="grid gap-10 lg:grid-cols-[1fr_320px] lg:gap-16">
+    <dl class="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+      {skills.map((s) => (
+        <div>
+          <dt class="eyebrow">{s.group}</dt>
+          <dd class="mt-2.5 flex flex-wrap gap-1.5">
+            {s.items.map((i) => <span class="rounded-md bg-bg-muted px-2.5 py-1 text-sm text-fg">{i}</span>)}
+          </dd>
+        </div>
+      ))}
+    </dl>
+
+    <aside class="space-y-8">
+      <div>
+        <p class="eyebrow">Education</p>
+        <p class="mt-2.5 font-medium text-fg">{education.school}</p>
+        <p class="text-sm text-fg-muted">{education.degree}</p>
+        <p class="mt-1 font-mono text-xs text-fg-subtle">{education.start} — {education.end} · {education.note}</p>
+      </div>
+      <div>
+        <p class="eyebrow">Competitive programming</p>
+        <ul class="mt-2.5 space-y-1.5 text-sm">
+          <li><a class="link-underline text-fg" href={profile.links.leetcode} rel="noopener">LeetCode</a> <span class="text-fg-subtle">· manasgoyal95</span></li>
+          <li><a class="link-underline text-fg" href={profile.links.codeforces} rel="noopener">Codeforces</a> <span class="text-fg-subtle">· manasgoyal95</span></li>
+          <li><a class="link-underline text-fg" href={profile.links.codechef} rel="noopener">CodeChef</a> <span class="text-fg-subtle">· goyal_manas</span></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</Section>

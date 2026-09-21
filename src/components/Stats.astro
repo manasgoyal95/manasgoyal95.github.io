@@ -1,0 +1,13 @@
+---
+import { profile } from '../data/profile';
+---
+<section class="container-prose pb-16 sm:pb-24" aria-label="Highlights">
+  <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line lg:grid-cols-4">
+    {profile.stats.map((s) => (
+      <div class="bg-bg-elevated px-5 py-6 sm:px-6 sm:py-7">
+        <dd class="font-mono text-3xl font-medium tracking-tight text-fg sm:text-4xl">{s.value}</dd>
+        <dt class="mt-1.5 text-sm text-fg-muted">{s.label}</dt>
+      </div>
+    ))}
+  </dl>
+</section>
