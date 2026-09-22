@@ -5,10 +5,10 @@ const year = new Date().getFullYear();
 ---
 <footer class="border-t border-line py-10">
   <div class="container-prose flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-    <p class="text-sm text-fg-subtle">© {year} {profile.name}. Built with Astro &amp; Tailwind — <a class="link-underline" href="https://github.com/manasgoyal95/manasgoyal95.github.io">source</a>.</p>
+    <p class="text-sm text-fg-subtle">© {year} {profile.name}. Built with Astro &amp; Tailwind — <a class="link-underline" target="_blank" rel="noopener" href="https://github.com/manasgoyal95/manasgoyal95.github.io">source</a>.</p>
     <ul class="flex items-center gap-4">
-      <li><a class="text-fg-muted hover:text-fg" href={profile.links.github} aria-label="GitHub" rel="me noopener"><Icon name="github" /></a></li>
-      <li><a class="text-fg-muted hover:text-fg" href={profile.links.linkedin} aria-label="LinkedIn" rel="me noopener"><Icon name="linkedin" /></a></li>
+      <li><a class="text-fg-muted hover:text-fg" href={profile.links.github} aria-label="GitHub" target="_blank" rel="me noopener"><Icon name="github" /></a></li>
+      <li><a class="text-fg-muted hover:text-fg" href={profile.links.linkedin} aria-label="LinkedIn" target="_blank" rel="me noopener"><Icon name="linkedin" /></a></li>
       <li><a class="text-fg-muted hover:text-fg" href={`mailto:${profile.email}`} aria-label="Email"><Icon name="mail" /></a></li>
     </ul>
   </div>

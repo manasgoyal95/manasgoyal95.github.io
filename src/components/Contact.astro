@@ -2,9 +2,9 @@
 import Icon from './Icon.astro';
 import { profile } from '../data/profile';
 ---
-<section id="contact" class="scroll-mt-20 border-t border-line py-20 sm:py-28" aria-labelledby="contact-title">
+<section id="contact" class="section-y scroll-mt-20 border-t border-line" aria-labelledby="contact-title">
   <div class="container-prose">
-    <div class="rounded-card border border-line bg-bg-elevated px-6 py-12 sm:px-12 sm:py-16">
+    <div class="surface rounded-card border border-line bg-bg-elevated px-6 py-12 sm:px-12 sm:py-16">
       <p class="eyebrow mb-3">Contact</p>
       <h2 id="contact-title" class="max-w-2xl text-3xl font-semibold tracking-tightest text-fg sm:text-4xl">
         Hiring for backend or platform work? Let's talk.
@@ -16,11 +16,8 @@ import { profile } from '../data/profile';
         <a href={`mailto:${profile.email}`} class="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-fg transition-opacity hover:opacity-90">
           <Icon name="mail" size={16} /> {profile.email}
         </a>
-        <a href={profile.links.linkedin} rel="me noopener" class="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong px-5 text-sm font-medium text-fg transition-colors hover:border-fg">
+        <a href={profile.links.linkedin} target="_blank" rel="me noopener" class="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong px-5 text-sm font-medium text-fg transition-colors hover:border-fg">
           <Icon name="linkedin" size={16} /> LinkedIn
-        </a>
-        <a href={profile.resumeUrl} download class="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong px-5 text-sm font-medium text-fg transition-colors hover:border-fg">
-          <Icon name="download" size={16} /> Resume
         </a>
       </div>
     </div>

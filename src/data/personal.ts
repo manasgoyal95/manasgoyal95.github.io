@@ -5,6 +5,8 @@ export type PersonalProject = {
   stack: string[];
   repo: string;
   demo?: string;
+  /** Shown next to the demo link, e.g. free-tier cold-start warning. */
+  demoNote?: string;
   /** Slug of a full case study under /work, if one exists. */
   caseStudy?: string;
 };
@@ -18,6 +20,7 @@ export const personalProjects: PersonalProject[] = [
     stack: ['Go', 'WebSockets', 'React', 'TypeScript', 'SQLite'],
     repo: 'https://github.com/manasgoyal95/realtime-chat',
     demo: 'https://pulse-chat-7puv.onrender.com',
+    demoNote: 'free tier — first load wakes the server, ~15s',
     caseStudy: 'pulse-realtime-chat',
   },
   {

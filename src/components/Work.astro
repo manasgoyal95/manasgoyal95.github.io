@@ -1,16 +1,18 @@
 ---
 import Section from './Section.astro';
 import Icon from './Icon.astro';
+import Stats from './Stats.astro';
 import { projects } from '../data/projects';
 const featured = projects.filter((p) => p.featured);
 const rest = projects.filter((p) => !p.featured && p.org !== 'Personal');
 ---
 <Section id="work" eyebrow="Selected work" title="Systems I've built and shipped">
+  <Stats />
   <div class="grid gap-4 md:grid-cols-3">
     {featured.map((p) => (
-      <a href={`/work/${p.slug}`} class="group relative flex flex-col rounded-card border border-line bg-bg-elevated p-6 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_8px_30px_-12px_rgb(0_0_0/0.15)]">
+      <a href={`/work/${p.slug}`} class="surface-interactive group relative flex flex-col rounded-card border border-line bg-bg-elevated p-6 hover:-translate-y-0.5 hover:border-line-strong">
         <p class="eyebrow">{p.org} · {p.period}</p>
-        <h3 class="mt-3 text-lg font-semibold leading-snug tracking-tight text-fg">{p.title}</h3>
+        <h3 class="title-ui mt-3 text-lg leading-snug text-fg">{p.title}</h3>
         <p class="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{p.summary}</p>
         <ul class="mt-5 flex flex-wrap gap-1.5" aria-label="Technologies">
           {p.tags.map((t) => <li class="rounded-md bg-bg-muted px-2 py-0.5 font-mono text-[11px] text-fg-muted">{t}</li>)}
@@ -22,13 +24,13 @@ const rest = projects.filter((p) => !p.featured && p.org !== 'Personal');
     ))}
   </div>
 
-  <ul class="mt-4 divide-y divide-line rounded-card border border-line bg-bg-elevated">
+  <ul class="surface mt-4 divide-y divide-line rounded-card border border-line bg-bg-elevated">
     {rest.map((p) => (
       <li>
         <a href={`/work/${p.slug}`} class="group flex items-start justify-between gap-6 px-6 py-5 transition-colors hover:bg-bg-muted/60">
           <div class="min-w-0">
             <p class="eyebrow">{p.org} · {p.period}</p>
-            <h3 class="mt-1.5 font-semibold tracking-tight text-fg">{p.title}</h3>
+            <h3 class="title-ui mt-1.5 text-fg">{p.title}</h3>
             <p class="mt-1 text-sm text-fg-muted">{p.subtitle}</p>
           </div>
           <Icon name="arrow-up-right" class="mt-1 shrink-0 text-fg-subtle transition-colors group-hover:text-fg" />

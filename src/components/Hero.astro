@@ -1,15 +1,23 @@
 ---
 import Icon from './Icon.astro';
 import { profile } from '../data/profile';
+
+// Derived at build time so the badge never goes stale.
+const years = Math.floor(
+  (Date.now() - new Date(profile.careerStart).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+);
+const experience = `${years} yr${years === 1 ? '' : 's'} experience`;
 ---
-<section class="container-prose pt-16 pb-12 sm:pt-28 sm:pb-16" aria-label="Introduction">
+<section class="container-prose pt-10 pb-12 sm:pt-16 sm:pb-16" aria-label="Introduction">
   <div class="max-w-3xl">
-    <p class="rise inline-flex items-center gap-2 rounded-full border border-line bg-bg-elevated px-3 py-1 font-mono text-xs text-fg-muted">
-      <span class="relative flex size-2">
+    <p class="surface rise inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-bg-elevated px-3 py-1.5 font-mono text-xs text-fg-muted">
+      <span class="relative flex size-2 shrink-0">
         <span class="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60"></span>
         <span class="relative inline-flex size-2 rounded-full bg-accent"></span>
       </span>
-      {profile.role} at {profile.company}
+      <span class="min-w-0">
+        {profile.role} · {experience} · {profile.company} · {profile.location}
+      </span>
     </p>
 
     <h1 class="rise rise-1 mt-6 text-5xl font-semibold leading-[1.02] tracking-tightest text-fg sm:text-7xl">
@@ -19,20 +27,17 @@ import { profile } from '../data/profile';
     <p class="rise rise-2 mt-6 max-w-2xl text-xl leading-relaxed text-fg-muted sm:text-2xl">
       {profile.tagline}
     </p>
-    <p class="rise rise-2 mt-4 max-w-2xl text-base leading-relaxed text-fg-subtle sm:text-[17px]">
+    <p class="rise rise-2 mt-5 max-w-2xl text-base leading-relaxed text-fg-muted sm:text-[17px]">
       {profile.summary}
     </p>
 
-    <div class="rise rise-3 mt-9 flex flex-wrap items-center gap-3">
+    <div class="rise rise-3 mt-8 flex flex-wrap items-center gap-3">
       <a href="#work" class="inline-flex h-11 items-center gap-2 rounded-full bg-fg px-5 text-sm font-medium text-bg transition-opacity hover:opacity-85">
         See selected work <Icon name="arrow-right" size={16} />
       </a>
-      <a href={profile.resumeUrl} download class="inline-flex h-11 items-center gap-2 rounded-full border border-line-strong px-5 text-sm font-medium text-fg transition-colors hover:border-fg">
-        <Icon name="download" size={16} /> Resume (PDF)
-      </a>
       <div class="ml-1 flex items-center gap-1">
-        <a href={profile.links.github} rel="me noopener" class="inline-flex size-10 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg" aria-label="GitHub"><Icon name="github" /></a>
-        <a href={profile.links.linkedin} rel="me noopener" class="inline-flex size-10 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg" aria-label="LinkedIn"><Icon name="linkedin" /></a>
+        <a href={profile.links.github} target="_blank" rel="me noopener" class="inline-flex size-10 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg" aria-label="GitHub"><Icon name="github" /></a>
+        <a href={profile.links.linkedin} target="_blank" rel="me noopener" class="inline-flex size-10 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg" aria-label="LinkedIn"><Icon name="linkedin" /></a>
         <a href={`mailto:${profile.email}`} class="inline-flex size-10 items-center justify-center rounded-full text-fg-muted hover:bg-bg-muted hover:text-fg" aria-label="Email"><Icon name="mail" /></a>
       </div>
     </div>

@@ -1,12 +1,17 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/inter';
+/* Matches the Figma reference: Quicksand (rounded geometric) for voice,
+   Poppins for card titles, JetBrains Mono kept for the technical metadata layer. */
+@import '@fontsource-variable/quicksand';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-600.css';
 @import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------- Design tokens ---------- */
 @theme {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Quicksand Variable', ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-ui: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
 
   --color-bg: var(--bg);
@@ -22,7 +27,7 @@
   --color-accent-soft: var(--accent-soft);
 
   --radius-card: 14px;
-  --tracking-tightest: -0.035em;
+  --tracking-tightest: -0.015em;
 }
 
 :root {
@@ -37,6 +42,15 @@
   --accent: #0f766e;
   --accent-fg: #ffffff;
   --accent-soft: #e6f4f1;
+
+  /* Ambient backdrop + elevation */
+  --glow-a: rgb(15 118 110 / 0.14);
+  --glow-b: rgb(15 118 110 / 0.09);
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 14px -6px rgb(16 24 40 / 0.08);
+  --shadow-card-hover: 0 2px 4px rgb(16 24 40 / 0.05), 0 14px 32px -10px rgb(16 24 40 / 0.14);
+  --shadow-nav: 0 1px 3px rgb(16 24 40 / 0.05), 0 8px 24px -12px rgb(16 24 40 / 0.10);
+  --edge-top: inset 0 1px 0 rgb(255 255 255 / 0.6);
   color-scheme: light;
 }
 
@@ -52,6 +66,15 @@
   --accent: #2dd4bf;
   --accent-fg: #06201d;
   --accent-soft: #10302c;
+
+  /* Shadows read weakly on dark, so elevation leans on a top edge highlight. */
+  --glow-a: rgb(45 212 191 / 0.13);
+  --glow-b: rgb(45 212 191 / 0.08);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 8px 24px -12px rgb(0 0 0 / 0.65);
+  --shadow-card-hover: 0 2px 6px rgb(0 0 0 / 0.5), 0 16px 40px -14px rgb(0 0 0 / 0.8);
+  --shadow-nav: 0 1px 3px rgb(0 0 0 / 0.5), 0 10px 30px -14px rgb(0 0 0 / 0.7);
+  --edge-top: inset 0 1px 0 rgb(255 255 255 / 0.05);
   color-scheme: dark;
 }
 
@@ -67,12 +90,20 @@ html {
 }
 
 body {
-  background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  font-weight: 500;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* Ambient bloom, painted as background layers so nothing can stack over it. */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(42rem 24rem at 12% -4rem, var(--glow-a), transparent 60%),
+    radial-gradient(38rem 22rem at 92% 6rem, var(--glow-b), transparent 60%);
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, no-repeat;
 }
 
 ::selection { background: var(--accent); color: var(--accent-fg); }
@@ -90,6 +121,34 @@ body {
   margin-inline: auto;
   padding-inline: 1.25rem;
   @media (min-width: 640px) { padding-inline: 2rem; }
+}
+
+/* Raised surface: border + soft elevation + a lit top edge. */
+@utility surface {
+  box-shadow: var(--shadow-card), var(--edge-top);
+}
+
+@utility surface-interactive {
+  box-shadow: var(--shadow-card), var(--edge-top);
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+  &:hover {
+    box-shadow: var(--shadow-card-hover), var(--edge-top);
+  }
+}
+
+/* Card and list titles — the punchier geometric face from the reference. */
+@utility title-ui {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* One vertical rhythm for every major section, so gaps never drift apart.
+   Section-to-section reads as 2x this value; the hero matches by using it as
+   its own bottom padding. */
+@utility section-y {
+  padding-block: 3rem;
+  @media (min-width: 640px) { padding-block: 4rem; }
 }
 
 @utility eyebrow {

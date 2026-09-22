@@ -43,7 +43,7 @@ export const projects: Project[] = [
       { label: 'Recovery', value: 'DLQ consumer with per-provider recovery handlers (CXP, Wex, CKO, Revolut) and an async replay endpoint for stranded webhooks' },
       { label: 'Reconciliation', value: 'Settle-vs-auth amount deltas across providers, CXP/Wex/CKO/TripLink settlement-file reconcile, mismatches recorded for review' },
       { label: 'Scale-out', value: 'CXP and Wex consumers ship as standalone binaries from the same image so they scale independently of the API' },
-      { label: 'Tests', value: '111 test files in the webhook package (scenario tests per provider event type)' },
+      { label: 'Tests', value: 'Scenario tests per provider per event type — auth, clearing, refund, reversal and settlement shapes each covered' },
     ],
     built: [
       'The Service Bus publisher, peek-lock consumer and DLQ consumer, later made transport-neutral so the same decision pipeline runs on GCP Pub/Sub.',
@@ -72,7 +72,7 @@ export const projects: Project[] = [
       },
     ],
     impact: [
-      '99% delivery reliability for provider events; ingestion is decoupled from API latency.',
+      '99% of provider events land on the first attempt; the rest dead-letter and replay rather than being lost. Ingestion is decoupled from API latency.',
       'Seven providers on one pipeline; onboarding a new one is a processor plus a recovery handler.',
       'Every event has an audit row keyed by provider id, so support questions are one search away.',
     ],
@@ -83,7 +83,7 @@ export const projects: Project[] = [
     subtitle: 'Client and issuing-side wallets across 31 currencies: top-ups, transfers, card funding, refunds and statements — every movement a balanced posting.',
     org: 'iOL World',
     period: 'Oct 2024 — present',
-    role: 'One of two principal contributors to the wallets domain (124 commits); built the FX-rate resolver and wallet statements.',
+    role: 'One of two principal contributors to the wallets domain; built the FX-rate resolver and wallet statements.',
     featured: true,
     tags: ['Go', 'PostgreSQL', 'Double-entry ledger', 'FX', 'sqlx'],
     summary:
@@ -146,7 +146,7 @@ export const projects: Project[] = [
       { label: 'Routing', value: 'Rule-based by currency, brand, country and beneficiary category; USD and cross-provider fallback; failover when an issuer is down' },
       { label: 'Resilience', value: 'Outbound gateway with timeouts, retries with backoff and circuit breakers; transient 5xx retry on Revolut card calls' },
       { label: 'Client webhooks', value: 'Subscription model per org; created / activated / funded / terminated events with a versioned payload' },
-      { label: 'Codebase', value: '~280k lines of Go, 966 files, 487 test files; PR gate: gofmt, vet, golangci-lint, tidy, tests with coverage' },
+      { label: 'Quality gate', value: 'PR pipeline I set up and own: gofmt, vet, golangci-lint, tidy and tests with coverage — blocking on every merge' },
     ],
     built: [
       'Revolut Business issuing integration: client SDK, webhook signature verification, card activation windows, MCC allow-list auto-expansion on category declines, reconciliation and replay.',
@@ -181,7 +181,7 @@ export const projects: Project[] = [
     subtitle: 'Self-serve, scheduled and exported reports over wallet and card data — nine report types, three formats, timezone-aware delivery.',
     org: 'iOL World',
     period: 'Jun 2025 — present',
-    role: 'Top contributor (122 commits); built most of the service and repository layers, ES logging, exports and scheduled delivery.',
+    role: 'Primary author of the service; built most of the service and repository layers, ES logging, exports and scheduled delivery.',
     tags: ['Go', 'PostgreSQL', 'sqlx', 'excelize', 'Azure Blob', 'cron'],
     summary:
       'A standalone Go service where users define reports (columns, filters, UDFs, output options), preview them, export to CSV/XLSX/PDF, and schedule email delivery — all read-only against the wallet database.',
@@ -298,7 +298,7 @@ export const projects: Project[] = [
     impact: ['Live demo and a README that documents every trade-off.'],
     links: [
       { label: 'Source on GitHub', href: 'https://github.com/manasgoyal95/realtime-chat' },
-      { label: 'Live demo', href: 'https://pulse-chat-7puv.onrender.com' },
+      { label: 'Live demo (free tier, ~15s cold start)', href: 'https://pulse-chat-7puv.onrender.com' },
     ],
   },
 ];

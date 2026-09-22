@@ -3,14 +3,14 @@ import Section from './Section.astro';
 import { experience } from '../data/experience';
 ---
 <Section id="experience" eyebrow="Experience" title="Where I've worked" class="border-t border-line">
-  <ol class="space-y-14">
+  <ol class="space-y-12">
     {experience.map((e) => (
       <li class="grid gap-6 md:grid-cols-[200px_1fr] md:gap-10">
         <div>
           <p class="font-mono text-sm text-fg-subtle">{e.start} — {e.end}</p>
         </div>
         <div>
-          <h3 class="text-xl font-semibold tracking-tight text-fg">{e.role}</h3>
+          <h3 class="title-ui text-xl text-fg">{e.role}</h3>
           <p class="mt-0.5 text-fg-muted">{e.company}</p>
           <p class="mt-4 max-w-2xl text-fg-muted">{e.summary}</p>
           <ul class="mt-5 max-w-2xl space-y-3">

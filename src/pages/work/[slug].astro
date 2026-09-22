@@ -21,7 +21,7 @@ const next = projects[(idx + 1) % projects.length];
       <p class="eyebrow">{p.org} · {p.period}</p>
       <h1 class="mt-3 text-4xl font-semibold leading-tight tracking-tightest text-fg sm:text-5xl">{p.title}</h1>
       <p class="mt-4 text-xl leading-relaxed text-fg-muted">{p.subtitle}</p>
-      <p class="mt-4 inline-flex max-w-2xl gap-2 rounded-lg border border-line bg-bg-elevated px-3.5 py-2.5 text-sm leading-relaxed text-fg-muted">
+      <p class="surface mt-4 inline-flex max-w-2xl gap-2 rounded-lg border border-line bg-bg-elevated px-3.5 py-2.5 text-sm leading-relaxed text-fg-muted">
         <span class="mt-[0.45em] size-1.5 shrink-0 rounded-full bg-accent"></span>
         <span><span class="font-medium text-fg">My role.</span> {p.role}</span>
       </p>
@@ -32,7 +32,7 @@ const next = projects[(idx + 1) % projects.length];
         <ul class="mt-6 flex flex-wrap gap-3">
           {p.links.map((l) => (
             <li>
-              <a href={l.href} rel="noopener" class="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-4 text-sm font-medium text-fg hover:border-fg">
+              <a href={l.href} target="_blank" rel="noopener" class="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-4 text-sm font-medium text-fg hover:border-fg">
                 {l.label} <Icon name="arrow-up-right" size={14} />
               </a>
             </li>
@@ -45,7 +45,7 @@ const next = projects[(idx + 1) % projects.length];
       <Flow steps={p.flow} />
     </div>
 
-    <div class="mt-14 space-y-12 md:space-y-16">
+    <div class="mt-12 space-y-12 md:space-y-14">
       <section class="grid gap-3 md:grid-cols-[180px_1fr] md:gap-x-12">
         <h2 class="eyebrow md:pt-1">Context</h2>
         <p class="max-w-2xl text-[17px] leading-relaxed text-fg-muted">{p.context}</p>
@@ -53,7 +53,7 @@ const next = projects[(idx + 1) % projects.length];
 
       <section class="grid gap-3 md:grid-cols-[180px_1fr] md:gap-x-12">
         <h2 class="eyebrow md:pt-1">Specification</h2>
-        <dl class="max-w-2xl divide-y divide-line overflow-hidden rounded-card border border-line bg-bg-elevated">
+        <dl class="surface max-w-2xl divide-y divide-line overflow-hidden rounded-card border border-line bg-bg-elevated">
           {p.specs.map((s) => (
             <div class="grid gap-1 px-5 py-3.5 sm:grid-cols-[150px_1fr] sm:gap-4">
               <dt class="font-mono text-xs uppercase tracking-wider text-fg-subtle sm:pt-0.5">{s.label}</dt>
@@ -76,8 +76,8 @@ const next = projects[(idx + 1) % projects.length];
         <h2 class="eyebrow md:pt-1">Key decisions</h2>
         <dl class="max-w-2xl space-y-4">
           {p.decisions.map((d) => (
-            <div class="rounded-card border border-line bg-bg-elevated p-5">
-              <dt class="font-semibold tracking-tight text-fg">{d.title}</dt>
+            <div class="surface rounded-card border border-line bg-bg-elevated p-5">
+              <dt class="title-ui text-fg">{d.title}</dt>
               <dd class="mt-1.5 leading-relaxed text-fg-muted">{d.body}</dd>
             </div>
           ))}
@@ -96,7 +96,7 @@ const next = projects[(idx + 1) % projects.length];
 
     <nav class="mt-20 border-t border-line pt-8" aria-label="Next case study">
       <p class="eyebrow">Next</p>
-      <a href={`/work/${next.slug}`} class="group mt-2 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-fg">
+      <a href={`/work/${next.slug}`} class="title-ui group mt-2 inline-flex items-center gap-2 text-xl text-fg">
         {next.title}
         <Icon name="arrow-right" class="transition-transform group-hover:translate-x-0.5" />
       </a>
