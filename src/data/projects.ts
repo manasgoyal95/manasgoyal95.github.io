@@ -93,7 +93,7 @@ export const projects: Project[] = [
       'Wallets fund virtual cards. A balance that disagrees with its history, or a refund that double-credits, is a financial incident. The system had to handle concurrent funding from the card flow, cross-currency movements, refunds, manual adjustments by operations, and produce statements finance can reconcile.',
     specs: [
       { label: 'Wallet families', value: 'Client wallets (org × currency) and issuing wallets (org × currency × provider) with an in-transit balance for transfers' },
-      { label: 'Ledger', value: 'wallet_ledger / issuing_wallet_ledger: change type (c/d), previous and updated balance, references — written inside the same transaction as the movement' },
+      { label: 'Ledger', value: 'Separate ledgers for client and issuing wallets: change type (credit/debit), previous and updated balance, references — written inside the same transaction as the movement' },
       { label: 'Operations', value: 'Create, top-up (multiple methods incl. bank transfer with proforma invoice), transfer, credit-check, fund/modify/cancel/refund transaction, manual adjustment, orders' },
       { label: 'FX', value: 'Internal fxrate resolver: live Treasury rates with a 30-minute cache and a database fallback; markup rules per client' },
       { label: 'Concurrency', value: 'Row-level locks on the balance row; *Tx helper variants so multi-table writes compose in one transaction' },
@@ -142,7 +142,7 @@ export const projects: Project[] = [
       'Travel businesses need a fresh card per booking, in the supplier\'s currency, capped at the booking amount. Each issuer has its own API, auth scheme (OAuth1, OAuth2, mTLS, signed webhooks), currency coverage and quirks. Cards must be modifiable, reissuable and cancellable, and clients must be told what happened.',
     specs: [
       { label: 'Providers', value: 'Citi VCA, CXP/Conferma, Wex/EnCompass, Checkout.com, Revolut, TripLink, Mastercard ICCP — one connector package each behind a shared interface + factory' },
-      { label: 'Lifecycle', value: 'Issue → fund → modify (amount, dates) → reissue → cancel/terminate → refund; each transition persisted in vcc_events with a rollup materialised view' },
+      { label: 'Lifecycle', value: 'Issue → fund → modify (amount, dates) → reissue → cancel/terminate → refund; each transition persisted as an event with a rollup materialised view' },
       { label: 'Routing', value: 'Rule-based by currency, brand, country and beneficiary category; USD and cross-provider fallback; failover when an issuer is down' },
       { label: 'Resilience', value: 'Outbound gateway with timeouts, retries with backoff and circuit breakers; transient 5xx retry on Revolut card calls' },
       { label: 'Client webhooks', value: 'Subscription model per org; created / activated / funded / terminated events with a versioned payload' },

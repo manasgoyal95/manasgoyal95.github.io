@@ -27,21 +27,6 @@ export const experience: Experience[] = [
     ],
     stack: ['Go', 'PostgreSQL', 'Azure Service Bus', 'Azure Blob', 'Docker', 'New Relic', 'Elasticsearch'],
   },
-  {
-    company: 'NorthLadder',
-    role: 'Software Engineering Intern',
-    start: 'Dec 2023',
-    end: 'May 2024',
-    summary:
-      'Built the payment and payout service for a marketplace: collect buyer funds, hold against an order, disburse to sellers — every movement on a double-entry ledger.',
-    bullets: [
-      'Built a payment and payout microservice recording every money movement on a PostgreSQL double-entry ledger with balanced debit/credit pairs for full auditability.',
-      'Designed idempotent payment APIs using unique-constrained, client-supplied idempotency keys and row-level locking on balances, eliminating duplicate charges and lost-update races.',
-      'Modeled payment and payout lifecycles as explicit state machines (pending → authorized → captured → settled), releasing payouts only after capture, with retries for failed disbursements.',
-      'Integrated an external payment gateway via asynchronous webhooks with idempotent, out-of-order-safe handlers, plus a cron-driven settlement worker meeting a 48-hour SLA using job cursors to prevent double payment.',
-    ],
-    stack: ['Node.js', 'Express', 'PostgreSQL', 'Webhooks', 'Cron'],
-  },
 ];
 
 export const education = {
